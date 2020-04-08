@@ -157,16 +157,16 @@ class solar_power():
 
         self.ans = [] # Reset self.ans
 
-        max_theory_capacity = 1 / (self.INIT - self.MIN) * self.DAYS * self.PERDAY # = 10/3 * 7 * 18 * self.ERG = 2 163 000 for self.ERG==5150
-        
+        max_theory_capacity = 1 / (self.INIT - self.MIN) * self.DAYS * self.PERDAY * self.ERG # = 10/3 * 7 * 18 * self.ERG = 2 163 000 for self.ERG==5150
+        print('Max is', max_theory_capacity)
         for i in range(0,N,1): # Check areas (0,N)
             area = i*k/N
 
             if i == 0:
                 if area == 0 and self.ERG == 5150: 
-                    capacity = 1854000 # (1486800 is for self.ERG == 4130). You just have to run it once and compute it
+                    capacity = max_theory_capacity
                 else:
-                    capacity = math.floor(1/self.INIT*(4*self.ERG)/10)*10  # Minimum capacity (0.5 -> 0 in one day): floor(2*(4*ERG), -1), 4 = 
+                    capacity = math.floor(1/self.INIT*(4*self.ERG)/10)*10  # Minimum capacity (0.5 -> 0 in one day): floor(2*(4*ERG), -1)
                     
                 while self.check_cap(area, capacity) == False:
                     capacity += 10
@@ -191,7 +191,7 @@ class solar_power():
                 print('Area and Capacity:', ans)
             
             self.ans += [ans]
-            
+    
         return True
 
     def check_cap(self, area, capacity, min_charge=0.2):
@@ -331,15 +331,18 @@ class solar_power():
 def main():
     x = solar_power()
 
-    x.daily_sun(show=True)
-    x.min_area()
+    #r = x.check_cap(0, 1854010)
+    #print(r)
+
+    #x.daily_sun(show=True)
+    #x.min_area()
 
     #x.sim_stored_2020_04_08()
 
     x.find_min_cap(show=True)
-    x.plot_min_cap_by_area_curve(show=False,erg_unit='J')
+    #x.plot_min_cap_by_area_curve(show=False,erg_unit='J')
     
     
-    x.simulate_dimensions(area=0.05, capacity=100000, num_days=7, show=False, plot_upper=True, plot_lower=True)
+    #x.simulate_dimensions(area=0.05, capacity=100000, num_days=7, show=False, plot_upper=True, plot_lower=True)
 
 main()
