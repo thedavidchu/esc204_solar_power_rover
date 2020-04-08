@@ -22,6 +22,10 @@ class solar_power():
         self.EFF = 0.15 # Efficiency of the solar panels
         self.INIT = 0.5 # Ratio of how full the battery starts...
 
+        self.MIN = 0.2 # Minimum acceptable charge
+        self.DAYS = 7 # Number of days in simulation
+        self.PERDAY = 18 # Charge cycles per day
+
         self.COLLECT = [] # Energy flux collected as a function of time [J/m^2]
         for i in self.SUN:
             self.COLLECT += [i * self.EFF * self.TIME]
@@ -123,7 +127,7 @@ class solar_power():
         """
         Returns daily energy use in [J/day]
         """
-        return 18 * self.ERG
+        return self.PERDAY * self.ERG
 
     def min_area(self, show=False):
         """
@@ -152,20 +156,22 @@ class solar_power():
         k = 0.1 # Upper interval
 
         self.ans = [] # Reset self.ans
+
+        max_theory_capacity = 1 / (self.INIT - self.MIN) * self.DAYS * self.PERDAY # = 10/3 * 7 * 18 * self.ERG = 2 163 000 for self.ERG==5150
         
         for i in range(0,N,1): # Check areas (0,N)
             area = i*k/N
 
             if i == 0:
-                if area == 0 and self.ERG == 5150:
+                if area == 0 and self.ERG == 5150: 
                     capacity = 1854000 # (1486800 is for self.ERG == 4130). You just have to run it once and compute it
                 else:
-                    capacity = math.floor(3.3*(4*self.ERG)/10)*10  # Minimum capacity: floor(3.3*(4*4130), -1)
+                    capacity = math.floor(1/self.INIT*(4*self.ERG)/10)*10  # Minimum capacity (0.5 -> 0 in one day): floor(2*(4*ERG), -1), 4 = 
                     
                 while self.check_cap(area, capacity) == False:
                     capacity += 10
 
-                    if capacity > 420 * self.ERG: # = 10/3 * 7 * 18 * 4130
+                    if capacity > max_theory_capacity: 
                         print('ERROR: Exceeded bounds... somebody\'s math is wrong!')
                         break
             else:
@@ -174,7 +180,7 @@ class solar_power():
                 while self.check_cap(area, capacity) == True:
                     capacity -= 10
 
-                    if capacity < 7 * self.ERG: # (How did I get this number 55060 for self.ERG == 4130?)
+                    if capacity < 1/self.INIT * 4 * self.ERG: # 1/0.5 * 4 (initial runs in darkness) * self.ERG
                         print('ERROR: Something actually went wrong!')
                         break
 
@@ -188,24 +194,27 @@ class solar_power():
             
         return True
 
-    def check_cap(self, area, capacity):
+    def check_cap(self, area, capacity, min_charge=0.2):
+
         battery = self.INIT * capacity
 
         collect = [] # Function of how much sun it gets (in J)
         for i in self.COLLECT:
             collect += [area * i]
 
-        for day in range(0,6,1):
+        for day in range(0,self.DAYS,1):
             for t in range(0,len(collect),1):
                 if t % 8 == 0 or (t%4==0 and t>23 and t<75):
                     battery -= self.ERG # Use battery
 
-                    if battery < 0.2 * capacity: # Check if battery is out of charge
+                    if battery < min_charge * capacity: # Check if battery is out of charge
                         return False
                     
                 battery += collect[t]
                 if battery > capacity:
                     battery = capacity
+
+        # If it passes the filter, return True
         return True
         
     def plot_min_cap_by_area_curve(self,show=False,erg_unit='Wh'):
@@ -221,7 +230,7 @@ class solar_power():
             area += [self.ans[i][0]]
             capacity += [self.convert(self.ans[i][1], unitB=flux_unit)]
 
-            max_cap += [1854000]3.3*(4*self.ERG)
+            max_cap += [1854000] #3.3*(4*self.ERG)
             min_cap += [420 * self.ERG]
 
         if show == True:
@@ -243,12 +252,14 @@ class solar_power():
     def simulate_dimensions(self, area, capacity, num_days=1, show=False, plot_upper=False, plot_lower=False):
         sim_battery = []
         sim_collect = []
-        
+
+        # Initiate battery levels
         battery = self.INIT * capacity
         
         collect = [] # Function of how much sun it gets
         for i in self.COLLECT:
             collect += [area * i]
+        print('Collected solar energy [J/15 min]:', collect)
 
         # Show values it will plot
         if show == True:
@@ -261,16 +272,17 @@ class solar_power():
             for t in range(0,len(collect),1):
 
                 sim_battery += [battery]
-                sim_collect += [self.TIME * area * collect[t]]
+                sim_collect += [collect[t]] # WAS: [self.TIME * area * collect[t]]. Incorrect?
 
                 
                 if t % 8 == 0 or (t%4==0 and t>23 and t<75):
                     battery -= self.ERG # Use battery
 
-                    if battery < 0.2 * capacity and battery > 0: # Check if battery is out of charge
-                        print('WARNING: BATTERY LOW')
-                    elif battery <= 0:
-                        print('ERROR: BATTERY DEAD')
+                    if show == True:
+                        if battery < 0.2 * capacity and battery > 0: # Check if battery is out of charge
+                            print('WARNING: BATTERY LOW')
+                        elif battery <= 0:
+                            print('ERROR: BATTERY DEAD')
                     
                 battery += collect[t]
                 if battery > capacity:
@@ -302,7 +314,7 @@ class solar_power():
         plt.xlabel('Time [h]')
         plt.ylabel('Energy [J]')
         plt.title(title)
-        plt.legend()
+        plt.legend(loc='upper left')
         plt.show()
 
         return True
@@ -324,10 +336,10 @@ def main():
 
     #x.sim_stored_2020_04_08()
 
-    #x.find_min_cap(show=True)
-    #x.plot_min_cap_by_area_curve(show=False,erg_unit='J')
+    x.find_min_cap(show=True)
+    x.plot_min_cap_by_area_curve(show=False,erg_unit='J')
     
     
-    x.simulate_dimensions(area=0.04*2, capacity=76900, num_days=7, show=False, plot_upper=True, plot_lower=True)
+    x.simulate_dimensions(area=0.05, capacity=100000, num_days=7, show=False, plot_upper=True, plot_lower=True)
 
 main()
