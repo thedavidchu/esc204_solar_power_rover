@@ -68,6 +68,15 @@ class solar_power():
             else:
                 print('ERROR: unsupoorted target unit in solar_power.convert(). Value returned as None.')
                 return None
+        elif unitA == 'J':
+            if unitB == 'J':
+                return value
+            elif unitB == 'kJ':
+                return value / 1000
+            elif unitB == 'Wh':
+                return value / 3600
+            elif unitB == 'kWh':
+                return value / 3600 / 1000
         else:
             print('ERROR: unsupported input unit in solar_power.convert(). Value returned as None.')
             return None
@@ -151,16 +160,17 @@ class solar_power():
 
     ##### Find dimensions #####
 
-    def find_min_cap(self,show=False):
-        N = 1000 # Number of steps
-        k = 0.1 # Upper interval
+    def find_min_cap(self,lower=0,upper=1,steps=1000,show=False):
+        N = steps # Number of steps
+        h = lower # Lower bound
+        k = upper # Upper bound
+        
 
         self.ans = [] # Reset self.ans
 
         max_theory_capacity = 1 / (self.INIT - self.MIN) * self.DAYS * self.PERDAY * self.ERG # = 10/3 * 7 * 18 * self.ERG = 2 163 000 for self.ERG==5150
-        print('Max is', max_theory_capacity)
         for i in range(0,N,1): # Check areas (0,N)
-            area = i*k/N
+            area = h + i*k/N
 
             if i == 0:
                 if area == 0 and self.ERG == 5150: 
@@ -191,6 +201,9 @@ class solar_power():
                 print('Area and Capacity:', ans)
             
             self.ans += [ans]
+
+        if show == True:
+            print('Capacity as a function of Area: ',self.ans)
     
         return True
 
@@ -224,19 +237,18 @@ class solar_power():
         capacity = []
         max_cap = []
         min_cap = []
-        flux_unit = erg_unit+'/day/m^2'
         
         for i in range(0,len(self.ans),1):
             area += [self.ans[i][0]]
-            capacity += [self.convert(self.ans[i][1], unitB=flux_unit)]
+            capacity += [self.convert(self.ans[i][1],'J',erg_unit)]
 
             max_cap += [1854000] #3.3*(4*self.ERG)
             min_cap += [420 * self.ERG]
 
         if show == True:
             print('Minimum capacity [J] as a function of Area:', self.ans)
-            print('Flux unit:', flux_unit)
-            print('Minimum capacity ['+flux_unit+'] as a function of Area:', capacity)
+            print('Energy unit:', erg_unit)
+            print('Minimum capacity ['+erg_unit+'] as a function of Area:', capacity)
 
         plt.plot(area,capacity, label='Minimum Battery size for Given Area')
         plt.xlabel('Area [m^2]')
@@ -249,7 +261,7 @@ class solar_power():
 
 
 
-    def simulate_dimensions(self, area, capacity, num_days=1, show=False, plot_upper=False, plot_lower=False):
+    def simulate_dimensions(self, area, capacity, num_days=1, erg_unit='J', show=False, plot_upper=True, plot_lower=False):
         sim_battery = []
         sim_collect = []
 
@@ -259,13 +271,12 @@ class solar_power():
         collect = [] # Function of how much sun it gets
         for i in self.COLLECT:
             collect += [area * i]
-        print('Collected solar energy [J/15 min]:', collect)
 
         # Show values it will plot
         if show == True:
             print('Area:', area, '\n')
-            print('COLLECT:', self.COLLECT, '\nSum of COLLECT:', sum(self.COLLECT), '\n')
-            print('collect:',collect, '\nSum of collect:', sum(collect),'\n')
+            print('COLLECT [J/15 min/m^2]:', self.COLLECT, '\nSum of COLLECT:', sum(self.COLLECT), '\n')
+            print('collect [J/15 min]:',collect, '\nSum of collect:', sum(collect),'\n')
 
         for day in range(0, num_days, 1):
             
@@ -290,7 +301,7 @@ class solar_power():
 
         # Plotting it out
         time = []
-        title = str(num_days) + ' Day Simulation of '+str(area)+ ' m^2 Solar Panel \n and \n '+str(round(capacity/3600,2))+' W-h battery'
+        title = str(num_days) + ' Day Simulation of '+str(area)+ ' m^2 Solar Panel \n and \n '+str(round(self.convert(capacity,'J',erg_unit),2))+' '+erg_unit+' battery'
         for i in range(0,num_days*len(collect),1):
             time += [i*0.25]
 
@@ -312,7 +323,7 @@ class solar_power():
             plt.plot(time, lower, 'r--', label='Minimum Battery Charge')
         
         plt.xlabel('Time [h]')
-        plt.ylabel('Energy [J]')
+        plt.ylabel('Energy ['+erg_unit+']')
         plt.title(title)
         plt.legend(loc='upper left')
         plt.show()
@@ -331,18 +342,15 @@ class solar_power():
 def main():
     x = solar_power()
 
-    #r = x.check_cap(0, 1854010)
-    #print(r)
-
     #x.daily_sun(show=True)
     #x.min_area()
 
     #x.sim_stored_2020_04_08()
 
-    x.find_min_cap(show=True)
+    x.find_min_cap(lower=0,upper=1,steps=1000, show=True)
     #x.plot_min_cap_by_area_curve(show=False,erg_unit='J')
     
     
-    #x.simulate_dimensions(area=0.05, capacity=100000, num_days=7, show=False, plot_upper=True, plot_lower=True)
+    x.simulate_dimensions(area=0.05, capacity=100000, num_days=1, erg_unit='Wh', show=False, plot_upper=True, plot_lower=False)
 
 main()
