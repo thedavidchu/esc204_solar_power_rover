@@ -19,7 +19,7 @@ class solar_power():
               0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0] # Solar energy flux as a function of time [W/m^2]
 
         self.TIME = 15*60 # Time interval for the sun
-        self.EFF = 0.1 # Efficiency of the solar panels
+        self.EFF = 0.15 # Efficiency of the solar panels
         self.INIT = 0.5 # Ratio of how full the battery starts...
 
         self.MIN = 0.2 # Minimum acceptable charge
@@ -416,40 +416,40 @@ class solar_power():
 
 def main():
     x = solar_power()
-    """
+    #"""
     # Part 2.1
     print('\n\n\t\t>>> PART 2.1 <<<\n\n')
     x.daily_sun(show=True)
     x.min_area()
     print('Cost of 0.05 m^2 solar panel is $', x.cost(area=0.05,capacity=0), 'USD')
-    """
+    #"""
 
-    """
+    #"""
     # Part 2.2
     print('\n\n\t\t>>> PART 2.2 <<<\n\n')
     print('Cost of a 27.78 Wh (100000 J) Li-battery is $', x.cost(area=0,capacity=100000),'USD')
-    """
+    #"""
 
-    """
+    #"""
     # Part 2.3
     print('\n\n\t\t>>> PART 2.3 <<<\n\n')
     x.simulate_dimensions(area=0.05,capacity=100000,num_days=1,erg_unit='Wh',show=False,plot_upper=True,plot_lower=False)
     print('Cost of 0.05 m^2 solar panel and 27.78 Wh (100000 J) Li-battery is $', x.cost(area=0.05,capacity=100000),'USD')
-    """
+    #"""
 
-    """
+    #"""
     # Part 2.4
     print('\n\n\t\t>>> PART 2.4 <<<\n\n')
     #x.find_min_cap(lower=0,upper=1,steps=1000, show=True) # Computes the values from scratch, but it is slow
-    #x.sim_stored_2020_04_08() # This is faster, since I already computed the values
-    x.sim_eff10_stored_2020_04_08() # This is faster, since I already computed the values
+    x.sim_stored_2020_04_08() # This is faster, since I already computed the values
+    #x.sim_eff10_stored_2020_04_08() # This is faster, since I already computed the values
     x.plot_min_cap_by_area_curve(show=False,erg_unit='Wh')
     
     r = x.optimal_dimensions()
     x.simulate_dimensions(r[0],r[1],7,'Wh',True,True,True)
     target_unit = 'Wh'
     print('Cost of',r[0], 'm^2 of solar panelling and',x.convert(r[1],'J',target_unit),target_unit,'of battery capacity: $',x.cost(r[0],r[1]),'USD')
-    """
+    #"""
 
     #"""
     # Discussion
