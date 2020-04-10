@@ -462,6 +462,8 @@ def main():
     print('\n\nNew cost for 7 % efficient solar panels and only 0.8 of a useable battery: $', x.cost(2*r[0],1.25*r[1]))
     
     #"""
+
+    input('\n\nPRESS ENTER TO ESCAPE')
     
     return True
 
