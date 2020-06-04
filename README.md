@@ -10,4 +10,4 @@ This program models the daily power consumption of a rover that plugs in an elec
 The full report and calculations are done in Word and Excel. The simulations are available here though!
 
 ## Final Words
-Chat? Email me. <3
+Chat? Email me. :D
